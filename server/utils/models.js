@@ -58,10 +58,14 @@ const getModelAttributes = (slug, options = {}) => {
   const typesToKeep = options.filterType ? (Array.isArray(options.filterType) ? options.filterType : [options.filterType]) : [];
   const filterOutTarget = toArray(options.filterOutTarget || []);
 
-  const attributesObj = strapi.getModel(slug).attributes;
+  const model = strapi.getModel(slug);
+  const attributesObj = model.attributes;
+  const exportFields = model.pluginOptions && model.pluginOptions['import-export-entries'] != null ? model.pluginOptions['import-export-entries'].export : undefined;
+
   const attributes = Object.keys(attributesObj)
     .reduce((acc, key) => acc.concat({ ...attributesObj[key], name: key }), [])
-    .filter((attr) => !filterOutTarget.includes(attr.target));
+    .filter((attr) => !filterOutTarget.includes(attr.target))
+    .filter((attr) => exportFields == null || exportFields.indexOf(attr.name) > -1);
 
   if (typesToKeep.length) {
     return attributes.filter((attr) => typesToKeep.includes(attr.type));

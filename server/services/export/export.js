@@ -104,8 +104,14 @@ const getPopulateFromSchema = (slug, deepness = 5) => {
 
   const populate = {};
   const model = strapi.getModel(slug);
+
+  const exportFields = model.pluginOptions && model.pluginOptions['import-export-entries'] != null ? model.pluginOptions['import-export-entries'].export : undefined;
+
   for (const [attributeName, attribute] of Object.entries(getModelPopulationAttributes(model))) {
     if (!attribute) {
+      continue;
+    }
+    if (exportFields != null && exportFields.indexOf(attributeName) == -1) {
       continue;
     }
 
