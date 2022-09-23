@@ -41,15 +41,28 @@ const exportData = async ({ slug, search, applySearch, exportFormat, relationsAs
   const newEntries = [];
   let entries = await strapi.entityService.findMany(slugToProcess, query);
   if(slugToProcess === 'api::registration-data-table.registration-data-table') {
+    const registeredAt = {};
     const questionaire = {}
     entries.map((item) => {
       const { lastName, firstName, email, phoneNumber, ...rest } = item.user;
+      if(item.createdAt) {
+        registeredAt['createdAt'] = item.createdAt;
+      }
       if(item.row) {
         item.row.map((item) => {
           questionaire[item.columnName] = item.data
         })
-        newEntries.push({lastName: lastName, firstName: firstName, email: email, phoneNumber: phoneNumber, ...questionaire})
+        const createdAt = registeredAt['createdAt']
+        const refinedDate = `${new Date(createdAt).getFullYear()}/${('0' + (new Date(createdAt).getMonth() + 1)).slice(-2)}/${new Date(createdAt).getDate()} ${new Date(createdAt).getHours()}:${new Date(createdAt).getMinutes()}`
+        newEntries.push({lastName: lastName, firstName: firstName, email: email, phoneNumber: phoneNumber, ...questionaire, createdAt: refinedDate})
       }
+    })
+    entries = newEntries;
+  } else {
+    entries.map((entry) => {
+      const { createdAt } = entry;
+      const refinedDate = `${new Date(createdAt).getFullYear()}/${('0' + (new Date(createdAt).getMonth() + 1)).slice(-2)}/${new Date(createdAt).getDate()} ${new Date(createdAt).getHours()}:${new Date(createdAt).getMinutes()}`
+      newEntries.push({ ...entry, createdAt: refinedDate})
     })
     entries = newEntries;
   }
