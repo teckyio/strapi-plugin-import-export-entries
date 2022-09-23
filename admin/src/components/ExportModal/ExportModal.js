@@ -31,9 +31,9 @@ export const ExportModal = ({ onClose }) => {
   const { notify } = useAlerts();
 
   const [optionExportFormat, setOptionExportFormat] = useState(dataFormats.CSV);
-  const [optionApplyFilters, setOptionApplyFilters] = useState(false);
+  const [optionApplyFilters, setOptionApplyFilters] = useState(true);
   const [optionRelationsAsId, setOptionRelationsAsId] = useState(false);
-  const [optionDeepness, setOptionDeepness] = useState(5);
+  const [optionDeepness, setOptionDeepness] = useState(2);
   const [data, setData] = useState(null);
   const [fetchingData, setFetchingData] = useState(false);
 
@@ -66,8 +66,10 @@ export const ExportModal = ({ onClose }) => {
     }
 
     const { fileExt, fileContentType } = config;
-    const fileName = `export_${slug}.${fileExt}`.replaceAll(':', '-').replaceAll('--', '-');
-    downloadFile(data, withTimestamp(fileName), `${fileContentType};charset=utf-8;`);
+    // const fileName = `export_${slug}.${fileExt}`.replaceAll(':', '-').replaceAll('--', '-');
+    const fileName = search.split('[event][eventName][$eq]=')
+    const finalName = fileName[1] ? fileName[1] : slug.split('.')[1];
+    downloadFile(data, withTimestamp(finalName +`.${fileExt}`), `${fileContentType};charset=utf-8;`);
   };
 
   const copyToClipboard = () => {

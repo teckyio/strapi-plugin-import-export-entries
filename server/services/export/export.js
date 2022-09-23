@@ -32,15 +32,27 @@ const dataConverterConfigs = {
  */
 const exportData = async ({ slug, search, applySearch, exportFormat, relationsAsId, deepness = 5 }) => {
   const slugToProcess = CustomSlugToSlug[slug] || slug;
-
   const queryBuilder = new ObjectBuilder();
   queryBuilder.extend(getPopulateFromSchema(slugToProcess, deepness));
   if (applySearch) {
     queryBuilder.extend(buildFilterQuery(search));
   }
   const query = queryBuilder.get();
-
-  const entries = await strapi.entityService.findMany(slugToProcess, query);
+  const newEntries = [];
+  let entries = await strapi.entityService.findMany(slugToProcess, query);
+  if(slugToProcess === 'api::registration-data-table.registration-data-table') {
+    const questionaire = {}
+    entries.map((item) => {
+      const { lastName, firstName, email, phoneNumber, ...rest } = item.user;
+      if(item.row) {
+        item.row.map((item) => {
+          questionaire[item.columnName] = item.data
+        })
+        newEntries.push({lastName: lastName, firstName: firstName, email: email, phoneNumber: phoneNumber, ...questionaire})
+      }
+    })
+    entries = newEntries;
+  }
 
   const data = convertData(entries, {
     slug: slugToProcess,
@@ -79,7 +91,6 @@ const convertData = (entries, options) => {
   const converter = getConverter(options.dataFormat);
 
   const convertedData = converter.convertEntries(entries, options);
-
   return convertedData;
 };
 
@@ -105,8 +116,8 @@ const getPopulateFromSchema = (slug, deepness = 5) => {
   const populate = {};
   const model = strapi.getModel(slug);
 
-  const exportFields = model.pluginOptions && model.pluginOptions['import-export-entries'] != null ? model.pluginOptions['import-export-entries'].export : undefined;
-
+  let exportFields = model.pluginOptions && model.pluginOptions['import-export-entries'] != null ? model.pluginOptions['import-export-entries'].export : undefined;
+  exportFields = [...exportFields, 'phoneNumber', 'email']
   for (const [attributeName, attribute] of Object.entries(getModelPopulationAttributes(model))) {
     if (!attribute) {
       continue;

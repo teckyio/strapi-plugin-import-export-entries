@@ -3,10 +3,15 @@ const { isObjectSafe } = require('../../../libs/objects');
 const { CustomSlugToSlug, CustomSlugs } = require('../../config/constants');
 const { getConfig } = require('../../utils/getConfig');
 const { getModelAttributes, getModel } = require('../../utils/models');
+const _ = require('lodash');
 
 const convertToCsv = (entries, options) => {
   entries = toArray(entries);
-  const columnTitles = ['id'].concat(getModelAttributes(options.slug, { filterOutTarget: ['admin::user'] }).map((attr) => attr.name));
+  const csvFields = ['lastName', 'firstName', 'email', 'phoneNumber'];
+  
+  let columnTitles = getModelAttributes(options.slug, { filterOutTarget: ['admin::user'] }).map((attr) => attr.name).filter((item) => item !== 'row').filter((item) => item !== 'id').filter((item) => item !=='user').concat(entries[0]["companyName"] ?  Object.keys(entries[0]) : _.union(csvFields, Object.keys(entries[0])));
+  columnTitles = _.union(columnTitles, Object.keys(entries[0])).filter((title) => title !== 'id').filter((title) => title !== 'updatedAt').filter((title) => title !== 'createdAt').filter((title) => title !== 'publishedAt');
+
   const content = [convertStrArrayToCsv(columnTitles)].concat(entries.map((entry) => convertEntryToStrArray(entry, columnTitles)).map(convertStrArrayToCsv)).join('\r\n');
   return content;
 };
